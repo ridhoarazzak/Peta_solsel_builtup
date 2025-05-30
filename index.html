@@ -1,12 +1,30 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Built-up & Urban Density</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 100vh; margin: 0; }
+    body { margin: 0; padding: 0; }
+
+    #map {
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      z-index: 1001;
+      font-size: 18px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
     #legend {
       position: absolute;
       bottom: 30px;
@@ -18,6 +36,7 @@
       border-radius: 5px;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
+
     #legend i {
       width: 12px;
       height: 12px;
@@ -25,10 +44,27 @@
       margin-right: 8px;
       opacity: 0.7;
     }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 16px;
+        padding: 6px 10px;
+        top: 5px;
+        left: 5px;
+      }
+
+      #legend {
+        font-size: 12px;
+        bottom: 10px;
+        left: 5px;
+        padding: 8px;
+      }
+    }
   </style>
 </head>
 <body>
 
+  <h1>Dashboard Built-up & Urban Density</h1>
   <div id="map"></div>
   <div id="legend">
     <strong>Legenda:</strong><br>
@@ -39,23 +75,21 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Inisialisasi peta
-    var map = L.map('map').setView([-6.2, 106.85], 11);
+    // Inisialisasi peta ke Solok Selatan
+    var map = L.map('map').setView([-1.5167, 101.2667], 11);
 
-    // Tambahkan tile basemap (OpenStreetMap)
+    // Tambahkan tile basemap OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Jika kamu punya tile urban_density sendiri, ubah ini ke URL GitHub Pages-mu
-  
+    // Tambah layer tile Urban Density (GANTI URL jika perlu)
     var urbanDensity = L.tileLayer('https://github.com/ridhoarazzak/Peta_solsel_builtup/urban_density_tiles/{z}/{x}/{y}.png', {
       opacity: 0.6,
       attribution: 'Urban Density'
     }).addTo(map);
-    
 
-    // Style untuk Built-up Area
+    // Style Built-up Area berdasarkan tahun
     function styleBuiltup(feature) {
       return {
         fillColor: feature.properties.tahun === "2024" ? '#ff7800' : '#0078ff',
@@ -67,7 +101,7 @@
     }
 
     // Load GeoJSON Built-up 2024
-    fetch('builtup_2024.geojson') // GANTI jika perlu: URL lengkap ke GitHub Pages
+    fetch('builtup_2024.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
@@ -80,7 +114,7 @@
       });
 
     // Load GeoJSON Built-up 2025
-    fetch('builtup_2025.geojson') // GANTI jika perlu
+    fetch('builtup_2025.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
@@ -93,7 +127,7 @@
       });
 
     // Load GeoJSON Ekspansi
-    fetch('ekspansi.geojson') // GANTI jika perlu
+    fetch('ekspansi.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
