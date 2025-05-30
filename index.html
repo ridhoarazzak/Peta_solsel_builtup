@@ -86,21 +86,28 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    // Styling berdasarkan tahun
     function styleBuiltup(feature) {
+      let fillColor = '#0078ff'; // default (2025)
+      if (feature.properties.tahun === "2024") {
+        fillColor = '#ff7800';
+      }
       return {
-        fillColor: feature.properties.tahun === "2024" ? 'Orange' : 'Blue',
+        fillColor: fillColor,
         weight: 1,
-        color: 'White',
-        ekspansi_solok_selatan_2025_asli.geojsonekspansi_solok_selatan_2025_asli.geojsonekspansi_solok_selatan_2025_asli.geojsonekspansi_solok_selatan_2025_asli.geojsonfillOpacity: 0.5
+        color: 'white',
+        fillOpacity: 0.5
       };
     }
 
+    // Popup untuk masing-masing fitur
     function onEachBuiltupFeature(feature, layer) {
       const luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
       const tahun = feature.properties.tahun || 'N/A';
       layer.bindPopup(`<b>Built-up Area ${tahun}</b><br>Luas: ${luas} ha`);
     }
 
+    // Fungsi untuk memuat file GeoJSON
     function loadGeoJSON(url, options) {
       fetch(url)
         .then(res => {
@@ -117,7 +124,7 @@
         });
     }
 
-    // 🟢 GUNAKAN JALUR / (akar) karena file disimpan di /public/
+    // Load masing-masing GeoJSON (pastikan file berada di folder /public jika pakai Vercel)
     loadGeoJSON('/builtup_solok_selatan_2024_asli.geojson', {
       style: styleBuiltup,
       onEachFeature: onEachBuiltupFeature
