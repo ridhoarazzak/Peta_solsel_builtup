@@ -2,11 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Built-up & Urban Density</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body { margin: 0; padding: 0; }
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
     #map {
       height: 100vh;
@@ -66,30 +69,24 @@
 
   <h1>Dashboard Built-up & Urban Density</h1>
   <div id="map"></div>
+
   <div id="legend">
-    <strong>Legenda:</strong><br>
-    <i style="background:#ff7800"></i> Built-up 2024<br>
-    <i style="background:#0078ff"></i> Built-up 2025<br>
+    <strong>Legenda:</strong><br />
+    <i style="background:#ff7800"></i> Built-up 2024<br />
+    <i style="background:#0078ff"></i> Built-up 2025<br />
     <i style="background:green"></i> Ekspansi
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Inisialisasi peta ke Solok Selatan
-    var map = L.map('map').setView([-1.5167, 101.2667], 11);
+    const map = L.map('map').setView([-1.5167, 101.2667], 11);
 
-    // Tambahkan tile basemap OpenStreetMap
+    // Tile layer OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Tambah layer tile Urban Density (GANTI URL jika perlu)
-    var urbanDensity = L.tileLayer('https://github.com/ridhoarazzak/Peta_solsel_builtup/urban_density_tiles/{z}/{x}/{y}.png', {
-      opacity: 0.6,
-      attribution: 'Urban Density'
-    }).addTo(map);
-
-    // Style Built-up Area berdasarkan tahun
+    // Style Built-up Area
     function styleBuiltup(feature) {
       return {
         fillColor: feature.properties.tahun === "2024" ? '#ff7800' : '#0078ff',
@@ -100,18 +97,23 @@
       };
     }
 
+    // Popup untuk builtup
+    function onEachBuiltupFeature(feature, layer) {
+      const luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+      const tahun = feature.properties.tahun || 'N/A';
+      layer.bindPopup(`<b>Built-up Area ${tahun}</b><br>Luas: ${luas} ha`);
+    }
+
     // Load GeoJSON Built-up 2024
     fetch('builtup_2024.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
           style: styleBuiltup,
-          onEachFeature: function(feature, layer) {
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-            layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
-          }
+          onEachFeature: onEachBuiltupFeature
         }).addTo(map);
-      });
+      })
+      .catch(err => console.error('Error loading builtup_2024.geojson:', err));
 
     // Load GeoJSON Built-up 2025
     fetch('builtup_2025.geojson')
@@ -119,12 +121,10 @@
       .then(data => {
         L.geoJSON(data, {
           style: styleBuiltup,
-          onEachFeature: function(feature, layer) {
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-            layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
-          }
+          onEachFeature: onEachBuiltupFeature
         }).addTo(map);
-      });
+      })
+      .catch(err => console.error('Error loading builtup_2025.geojson:', err));
 
     // Load GeoJSON Ekspansi
     fetch('ekspansi.geojson')
@@ -141,7 +141,8 @@
             layer.bindPopup(`<b>Ekspansi</b><br>Info: ${feature.properties.info || 'N/A'}`);
           }
         }).addTo(map);
-      });
+      })
+      .catch(err => console.error('Error loading ekspansi.geojson:', err));
   </script>
 
 </body>
