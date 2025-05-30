@@ -55,7 +55,14 @@
     }
 
     // Tambahkan GeoJSON kamu di sini
-    var geojsonData = {builtup_solok_selatan_2024_asli.geojson builtup_solok_selatan_2025_asli.geojson, ekspansi_solok_selatan_2025_asli.geojson};
+     var geojsonData = {
+  type: "FeatureCollection",
+  features: [
+    ...builtup_solok_selatan_2024_asli.features,
+    ...builtup_solok_selatan_2025_asli.features,
+    ...ekspansi_solok_selatan_2025_asli.features
+  ]
+};
 
     // Tampilkan ke peta
     L.geoJSON(geojsonData, {
