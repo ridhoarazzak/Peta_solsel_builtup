@@ -2,23 +2,36 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Peta NDBI 2024–2025</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peta NDBI 2024–2025 Solok Selatan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <style>
-    #map { height: 100vh; }
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map { 
+      height: 100vh; 
+      width: 100vw;
+    }
     .legend {
       background: white;
       padding: 10px;
       line-height: 18px;
       color: #333;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 5px;
+      font-size: 14px;
     }
     .legend i {
       width: 18px;
       height: 18px;
       float: left;
       margin-right: 8px;
-      opacity: 0.7;
+      opacity: 0.9;
+      border: 1px solid #999;
     }
   </style>
 </head>
@@ -27,13 +40,15 @@
 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([-7.25, 112.75], 12); // Ganti koordinat sesuai lokasi kamu
+    // Set view ke Solok Selatan dengan zoom level sekitar 11 atau 12 agar detail terlihat
+    var map = L.map('map').setView([-3.4924, 100.8016], 11);
 
+    // Tile layer dari OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Warna berdasarkan tahun/kategori
+    // Fungsi warna berdasarkan tahun/kategori
     function getColor(tahun) {
       switch(tahun) {
         case 2024: return '#1f77b4';
@@ -43,54 +58,61 @@
       }
     }
 
-    // Gaya per fitur
+    // Style tiap fitur, dengan garis tepi lebih tebal supaya kelihatan
     function style(feature) {
       return {
-        fillColor: getColor(feature.properties.tahun || 'ekspansi'), // default ke ekspansi
-        weight: 1,
+        fillColor: getColor(feature.properties.tahun || 'ekspansi'),
+        weight: 2,       // garis tepi lebih tebal
         opacity: 1,
         color: 'white',
         fillOpacity: 0.7
       };
     }
 
-    // Tambahkan GeoJSON kamu di sini
-     var geojsonData = {
-  type: "FeatureCollection",
-  features: [
-    ...builtup_solok_selatan_2024_asli.features,
-    ...builtup_solok_selatan_2025_asli.features,
-    ...ekspansi_solok_selatan_2025_asli.features
-  ]
-};
+    // Data GeoJSON - pastikan variabel ini sudah ada dan berisi data asli kamu
+    var geojsonData = {
+      type: "FeatureCollection",
+      features: [
+        // Masukkan data asli kamu di sini
+        // Contoh fitur dummy:
+        // {
+        //   type: "Feature",
+        //   properties: { tahun: 2024, luas_ha: 12.34 },
+        //   geometry: {
+        //     type: "Polygon",
+        //     coordinates: [[[100.8, -3.49], [100.81, -3.49], [100.81, -3.5], [100.8, -3.5], [100.8, -3.49]]]
+        //   }
+        // }
+        ...builtup_solok_selatan_2024_asli.features,
+        ...builtup_solok_selatan_2025_asli.features,
+        ...ekspansi_solok_selatan_2025_asli.features
+      ]
+    };
 
-    // Tampilkan ke peta
+    // Tampilkan GeoJSON dengan style dan popup luas
     L.geoJSON(geojsonData, {
       style: style,
       onEachFeature: function (feature, layer) {
         var luas = feature.properties.luas_ha || 0;
-        layer.bindPopup("Luas: " + luas.toFixed(2) + " ha");
+        layer.bindPopup("<strong>Luas:</strong> " + luas.toFixed(2) + " ha");
       }
     }).addTo(map);
 
-    // Legenda
+    // Legenda di pojok kanan bawah
     var legend = L.control({position: 'bottomright'});
 
     legend.onAdd = function (map) {
       var div = L.DomUtil.create('div', 'legend'),
-          labels = ['<strong>Kategori</strong>'],
           categories = {
             '2024': '#1f77b4',
             '2025': '#2ca02c',
             'Ekspansi': '#ff7f0e'
           };
-
+      div.innerHTML = '<strong>Kategori</strong><br>';
       for (var key in categories) {
         div.innerHTML +=
-          '<i style="background:' + categories[key] + '"></i> ' +
-          key + '<br>';
+          '<i style="background:' + categories[key] + '"></i> ' + key + '<br>';
       }
-
       return div;
     };
 
