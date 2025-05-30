@@ -6,7 +6,7 @@
   <title>Dashboard Built-up & Urban Density</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
@@ -44,7 +44,7 @@
     #legend i {
       width: 12px;
       height: 12px;
-      float: left;
+      display: inline-block;
       margin-right: 8px;
       opacity: 0.7;
     }
@@ -82,12 +82,10 @@
   <script>
     const map = L.map('map').setView([-1.5167, 101.2667], 11);
 
-    // Tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Styling
     function styleBuiltup(feature) {
       return {
         fillColor: feature.properties.tahun === "2024" ? '#ff7800' : '#0078ff',
@@ -103,7 +101,6 @@
       layer.bindPopup(`<b>Built-up Area ${tahun}</b><br>Luas: ${luas} ha`);
     }
 
-    // Fungsi load GeoJSON
     function loadGeoJSON(url, options) {
       fetch(url)
         .then(res => {
@@ -111,24 +108,27 @@
           return res.json();
         })
         .then(data => {
-          console.log(`Loaded ${url}`, data); // Log untuk debugging
+          console.log(`Loaded ${url}`, data);
           L.geoJSON(data, options).addTo(map);
         })
-        .catch(err => console.error(`Error loading ${url}:`, err));
+        .catch(err => {
+          console.error(`Gagal memuat ${url}:`, err);
+          alert(`Gagal memuat ${url}. Periksa file GeoJSON dan jalur URL-nya.`);
+        });
     }
 
-    // Load layer
-    loadGeoJSON('builtup_2024.geojson', {
+    // 🟢 GUNAKAN JALUR / (akar) karena file disimpan di /public/
+    loadGeoJSON('/builtup_2024.geojson', {
       style: styleBuiltup,
       onEachFeature: onEachBuiltupFeature
     });
 
-    loadGeoJSON('builtup_2025.geojson', {
+    loadGeoJSON('/builtup_2025.geojson', {
       style: styleBuiltup,
       onEachFeature: onEachBuiltupFeature
     });
 
-    loadGeoJSON('ekspansi.geojson', {
+    loadGeoJSON('/ekspansi.geojson', {
       style: {
         fillColor: 'green',
         weight: 1,
