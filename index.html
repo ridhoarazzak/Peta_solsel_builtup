@@ -1,152 +1,93 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Built-up & Urban Density</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta charset="utf-8" />
+  <title>Peta NDBI 2024–2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-
-    h1 {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      z-index: 1001;
-      font-size: 18px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-    }
-
-    #legend {
-      position: absolute;
-      bottom: 30px;
-      left: 10px;
+    #map { height: 100vh; }
+    .legend {
       background: white;
       padding: 10px;
-      font-size: 14px;
-      z-index: 1000;
-      border-radius: 5px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      line-height: 18px;
+      color: #333;
     }
-
-    #legend i {
-      width: 12px;
-      height: 12px;
-      display: inline-block;
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
       margin-right: 8px;
       opacity: 0.7;
-    }
-
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 16px;
-        padding: 6px 10px;
-        top: 5px;
-        left: 5px;
-      }
-
-      #legend {
-        font-size: 12px;
-        bottom: 10px;
-        left: 5px;
-        padding: 8px;
-      }
     }
   </style>
 </head>
 <body>
+  <div id="map"></div>
 
-  <h1>Dashboard Built-up & Urban Density</h1>
-  <div id="map"></div> 
-
-  <div id="legend">
-    <strong>Legenda:</strong><br />
-    <i style="background:#ff7800"></i> Built-up 2024<br />
-    <i style="background:#0078ff"></i> Built-up 2025<br />
-    <i style="background:green"></i> Ekspansi
-  </div>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([-1.5167, 101.2667], 11);
+    var map = L.map('map').setView([-7.25, 112.75], 12); // Ganti koordinat sesuai lokasi kamu
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Styling berdasarkan tahun
-    function styleBuiltup(feature) {
-      let fillColor = '#0078ff'; // default (2025)
-      if (feature.properties.tahun === "2024") {
-        fillColor = '#ff7800';
+    // Warna berdasarkan tahun/kategori
+    function getColor(tahun) {
+      switch(tahun) {
+        case 2024: return '#1f77b4';
+        case 2025: return '#2ca02c';
+        case 'ekspansi': return '#ff7f0e';
+        default: return '#cccccc';
       }
+    }
+
+    // Gaya per fitur
+    function style(feature) {
       return {
-        fillColor: fillColor,
+        fillColor: getColor(feature.properties.tahun || 'ekspansi'), // default ke ekspansi
         weight: 1,
+        opacity: 1,
         color: 'white',
-        fillOpacity: 0.5
+        fillOpacity: 0.7
       };
     }
 
-    // Popup untuk masing-masing fitur
-    function onEachBuiltupFeature(feature, layer) {
-      const luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-      const tahun = feature.properties.tahun || 'N/A';
-      layer.bindPopup(`<b>Built-up Area ${tahun}</b><br>Luas: ${luas} ha`);
-    }
+    // Tambahkan GeoJSON kamu di sini
+    var geojsonData = {builtup_solok_selatan_2024_asli.geojson builtup_solok_selatan_2025_asli.geojson, ekspansi_solok_selatan_2025_asli.geojson};
 
-    // Fungsi untuk memuat file GeoJSON
-    function loadGeoJSON(url, options) {
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status} - ${url}`);
-          return res.json();
-        })
-        .then(data => {
-          console.log(`Loaded ${url}`, data);
-          L.geoJSON(data, options).addTo(map);
-        })
-        .catch(err => {
-          console.error(`Gagal memuat ${url}:`, err);
-          alert(`Gagal memuat ${url}. Periksa file GeoJSON dan jalur URL-nya.`);
-        });
-    }
-
-    // Load masing-masing GeoJSON (pastikan file berada di folder /public jika pakai Vercel)
-    loadGeoJSON('/builtup_solok_selatan_2024_asli.geojson', {
-      style: styleBuiltup,
-      onEachFeature: onEachBuiltupFeature
-    });
-
-    loadGeoJSON('/builtup_solok_selatan_2025_asli.geojson', {
-      style: styleBuiltup,
-      onEachFeature: onEachBuiltupFeature
-    });
-
-    loadGeoJSON('/ekspansi_solok_selatan_2025_asli.geojson', {
-      style: {
-        fillColor: 'green',
-        weight: 1,
-        color: 'white',
-        fillOpacity: 0.4
-      },
-      onEachFeature: function(feature, layer) {
-        layer.bindPopup(`<b>Ekspansi</b><br>Info: ${feature.properties.info || 'N/A'}`);
+    // Tampilkan ke peta
+    L.geoJSON(geojsonData, {
+      style: style,
+      onEachFeature: function (feature, layer) {
+        var luas = feature.properties.luas_ha || 0;
+        layer.bindPopup("Luas: " + luas.toFixed(2) + " ha");
       }
-    });
-  </script>
+    }).addTo(map);
 
+    // Legenda
+    var legend = L.control({position: 'bottomright'});
+
+    legend.onAdd = function (map) {
+      var div = L.DomUtil.create('div', 'legend'),
+          labels = ['<strong>Kategori</strong>'],
+          categories = {
+            '2024': '#1f77b4',
+            '2025': '#2ca02c',
+            'Ekspansi': '#ff7f0e'
+          };
+
+      for (var key in categories) {
+        div.innerHTML +=
+          '<i style="background:' + categories[key] + '"></i> ' +
+          key + '<br>';
+      }
+
+      return div;
+    };
+
+    legend.addTo(map);
+  </script>
 </body>
 </html>
