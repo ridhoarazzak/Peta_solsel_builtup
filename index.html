@@ -4,9 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard Built-up & Urban Density</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+8VWPdRPSOw7r1yqOrv2iWVfPHa1clTJo6ZhU9tAc="
+    crossorigin=""
+  />
   <style>
-    #map { height: 100vh; margin: 0; }
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
     #legend {
       position: absolute;
       bottom: 30px;
@@ -31,93 +40,180 @@
 </head>
 <body>
 
-  <div id="map"></div>
+<div id="map"></div>
 
-  <div id="legend">
-    <strong>Legenda:</strong><br>
-    <i style="background:#ff7800"></i> Built-up 2024<br>
-    <i style="background:#0078ff"></i> Built-up 2025<br>
-    <i style="background:green"></i> Ekspansi
-    <hr>
-    <strong>Urban Density (Tile Layer):</strong><br>
-    <i style="background:#91bfdb"></i> Jarang<br>
-    <i style="background:#fee08b"></i> Sedang<br>
-    <i style="background:#fc8d59"></i> Padat<br>
-    <i style="background:#d73027"></i> Sangat Padat<br>
-  </div>
+<div id="legend">
+  <strong>Legenda:</strong><br>
+  <i style="background:#ff7800"></i> Built-up 2024<br>
+  <i style="background:#0078ff"></i> Built-up 2025<br>
+  <i style="background:green"></i> Ekspansi<br>
+  <hr>
+  <strong>Urban Density (Tile Layer):</strong><br>
+  <i style="background:#91bfdb"></i> Jarang<br>
+  <i style="background:#fee08b"></i> Sedang<br>
+  <i style="background:#fc8d59"></i> Padat<br>
+  <i style="background:#d73027"></i> Sangat Padat<br>
+</div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    var map = L.map('map').setView([-1.23, 101.41], 11);
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-oPRe6C1IHr0PO6BnsrXGRwvZcdTLMULbE6MjP38U98w="
+  crossorigin=""
+></script>
+<script>
+  // Base Layers
+  var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    minZoom: 10,
+    maxZoom: 14
+  });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+  var cartodb = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CartoDB',
+    minZoom: 10,
+    maxZoom: 14
+  });
 
-    // Tile Layer Urban Density dari GitHub Pages
-      var urbanDensityTiles = L.tileLayer(
-  'https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png',
-  {
-    opacity: 0.7,
+  var toner = L.tileLayer('https://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', {
+    attribution: 'Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap',
+    minZoom: 10,
+    maxZoom: 14
+  });
+
+  var white = L.tileLayer(
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==",
+    { minZoom: 10, maxZoom: 14 }
+  );
+
+  // Overlay Tile Layer (Urban Density) - gdal2tiles TMS tiles
+  var urbanDensityTiles = L.tileLayer(
+    'https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png',
+    {
+      tms: true,
+      opacity: 0.7,
+      minZoom: 10,
+      maxZoom: 14,
+      attribution: 'Urban Density Tiles'
+    }
+  );
+
+  // Map initialization
+  var map = L.map('map', {
+    center: [-1.3648, 101.2803],
+    zoom: 12,
     minZoom: 10,
     maxZoom: 14,
-    attribution: 'Urban Density Tiles',
-    crossOrigin: true
+    layers: [osm, urbanDensityTiles]
+  });
+
+  // Base maps object
+  var basemaps = {
+    "OpenStreetMap": osm,
+    "CartoDB Positron": cartodb,
+    "Stamen Toner": toner,
+    "Without Background": white
+  };
+
+  // Placeholder for GeoJSON layers
+  var builtup2024Layer = L.layerGroup();
+  var builtup2025Layer = L.layerGroup();
+  var ekspansiLayer = L.layerGroup();
+
+  // Style function for built-up 2024
+  function styleBuiltup2024(feature) {
+    return {
+      fillColor: '#ff7800',
+      weight: 1,
+      color: 'white',
+      fillOpacity: 0.6
+    };
   }
-).addTo(map);
 
+  // Style function for built-up 2025
+  function styleBuiltup2025(feature) {
+    return {
+      fillColor: '#0078ff',
+      weight: 1,
+      color: 'white',
+      fillOpacity: 0.6
+    };
+  }
 
-    // Style dan load Built-up serta Ekspansi pakai fetch GeoJSON seperti semula
-    function styleBuiltup(feature) {
-      return {
-        fillColor: feature.properties.tahun === "2024" ? '#ff7800' : '#0078ff',
-        weight: 1,
-        opacity: 1,
-        color: 'white',
-        fillOpacity: 0.5
-      };
-    }
+  // Style function for ekspansi
+  function styleEkspansi(feature) {
+    return {
+      fillColor: 'green',
+      weight: 1,
+      color: 'white',
+      fillOpacity: 0.4
+    };
+  }
 
-    fetch('builtup_solok_selatan_2024_asli.geojson')
-      .then(res => res.json())
-      .then(data => {
-        L.geoJSON(data, {
-          style: styleBuiltup,
-          onEachFeature: (feature, layer) => {
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-            layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
-          }
-        }).addTo(map);
+  // Load Built-up 2024 GeoJSON
+  fetch('builtup_solok_selatan_2024_asli.geojson')
+    .then(res => res.json())
+    .then(data => {
+      var layer = L.geoJSON(data, {
+        filter: f => f.properties.tahun === "2024",
+        style: styleBuiltup2024,
+        onEachFeature: (feature, layer) => {
+          var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+          layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
+        }
       });
+      builtup2024Layer.addLayer(layer);
+      builtup2024Layer.addTo(map);
+    });
 
-    fetch('builtup_solok_selatan_2025_asli.geojson')
-      .then(res => res.json())
-      .then(data => {
-        L.geoJSON(data, {
-          style: styleBuiltup,
-          onEachFeature: (feature, layer) => {
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-            layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
-          }
-        }).addTo(map);
+  // Load Built-up 2025 GeoJSON
+  fetch('builtup_solok_selatan_2025_asli.geojson')
+    .then(res => res.json())
+    .then(data => {
+      var layer = L.geoJSON(data, {
+        filter: f => f.properties.tahun === "2025",
+        style: styleBuiltup2025,
+        onEachFeature: (feature, layer) => {
+          var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+          layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
+        }
       });
+      builtup2025Layer.addLayer(layer);
+      builtup2025Layer.addTo(map);
+    });
 
-    fetch('ekspansi_solok_selatan_2025_asli.geojson')
-      .then(res => res.json())
-      .then(data => {
-        L.geoJSON(data, {
-          style: {
-            fillColor: 'green',
-            weight: 1,
-            color: 'white',
-            fillOpacity: 0.4
-          },
-          onEachFeature: (feature, layer) => {
-            layer.bindPopup(`<b>Ekspansi</b><br>Info: ${feature.properties.info || 'N/A'}`);
-          }
-        }).addTo(map);
+  // Load Ekspansi GeoJSON
+  fetch('ekspansi_solok_selatan_2025_asli.geojson')
+    .then(res => res.json())
+    .then(data => {
+      var layer = L.geoJSON(data, {
+        style: styleEkspansi,
+        onEachFeature: (feature, layer) => {
+          var info = feature.properties.info || 'N/A';
+          layer.bindPopup(`<b>Ekspansi</b><br>Info: ${info}`);
+        }
       });
-  </script>
+      ekspansiLayer.addLayer(layer);
+      ekspansiLayer.addTo(map);
+    });
+
+  // Overlay maps object
+  var overlaymaps = {
+    "Urban Density": urbanDensityTiles,
+    "Built-up 2024": builtup2024Layer,
+    "Built-up 2025": builtup2025Layer,
+    "Ekspansi": ekspansiLayer
+  };
+
+  // Layer control
+  L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
+
+  // Fit map to urban density tile bounds
+  map.fitBounds([
+    [-1.7251908911809466, 100.8879929288952],
+    [-1.004406319174037, 101.67259597536716]
+  ]);
+</script>
+
 </body>
 </html>
 
