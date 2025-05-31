@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard Built-up & Urban Density</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
@@ -17,50 +17,55 @@
       z-index: 1000;
       border-radius: 5px;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      line-height: 18px;
     }
     #legend i {
-      width: 12px;
-      height: 12px;
+      width: 18px;
+      height: 18px;
       float: left;
       margin-right: 8px;
-      opacity: 0.7;
+      opacity: 0.8;
+      border: 1px solid #999;
     }
   </style>
 </head>
 <body>
 
   <div id="map"></div>
+
   <div id="legend">
     <strong>Legenda:</strong><br>
     <i style="background:#ff7800"></i> Built-up 2024<br>
     <i style="background:#0078ff"></i> Built-up 2025<br>
     <i style="background:green"></i> Ekspansi
+    <hr>
+    <strong>Urban Density (Tile Layer):</strong><br>
+    <i style="background:#91bfdb"></i> Jarang<br>
+    <i style="background:#fee08b"></i> Sedang<br>
+    <i style="background:#fc8d59"></i> Padat<br>
+    <i style="background:#d73027"></i> Sangat Padat<br>
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Inisialisasi peta
     var map = L.map('map').setView([-1.23, 101.41], 11);
 
-    // Tambahkan tile basemap (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Jika kamu punya tile urban_density sendiri, ubah ini ke URL GitHub Pages-mu
-    
-    var urbanDensity = L.tileLayer('https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png', {
-  opacity: 1,
-  attribution: 'Urban Density',
-  crossOrigin: true,
-  minZoom: 10,
-  maxZoom: 14
-}).addTo(map);
+    // Tile Layer Urban Density dari GitHub Pages
+    var urbanDensityTiles = L.tileLayer(
+      'https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png',
+      {
+        opacity: 0.7,
+        minZoom: 10,
+        maxZoom: 14,
+        attribution: 'Urban Density Tiles'
+      }
+    ).addTo(map);
 
-
-    
-
-    // Style untuk Built-up Area
+    // Style dan load Built-up serta Ekspansi pakai fetch GeoJSON seperti semula
     function styleBuiltup(feature) {
       return {
         fillColor: feature.properties.tahun === "2024" ? '#ff7800' : '#0078ff',
@@ -71,34 +76,31 @@
       };
     }
 
-    // Load GeoJSON Built-up 2024
-    fetch('builtup_solok_selatan_2024_asli.geojson') // GANTI jika perlu: URL lengkap ke GitHub Pages
+    fetch('builtup_solok_selatan_2024_asli.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
           style: styleBuiltup,
-          onEachFeature: function(feature, layer) {
+          onEachFeature: (feature, layer) => {
             var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
             layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
           }
         }).addTo(map);
       });
 
-    // Load GeoJSON Built-up 2025
-    fetch('builtup_solok_selatan_2025_asli.geojson') // GANTI jika perlu
+    fetch('builtup_solok_selatan_2025_asli.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
           style: styleBuiltup,
-          onEachFeature: function(feature, layer) {
+          onEachFeature: (feature, layer) => {
             var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
             layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
           }
         }).addTo(map);
       });
 
-    // Load GeoJSON Ekspansi
-    fetch('ekspansi_solok_selatan_2025_asli.geojson') // GANTI jika perlu
+    fetch('ekspansi_solok_selatan_2025_asli.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
@@ -108,13 +110,12 @@
             color: 'white',
             fillOpacity: 0.4
           },
-          onEachFeature: function(feature, layer) {
+          onEachFeature: (feature, layer) => {
             layer.bindPopup(`<b>Ekspansi</b><br>Info: ${feature.properties.info || 'N/A'}`);
           }
         }).addTo(map);
       });
   </script>
-
 </body>
 </html>
 
