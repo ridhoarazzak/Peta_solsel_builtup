@@ -77,8 +77,11 @@
     minZoom: 10,
     maxZoom: 14,
     opacity: 0.6,
-    attribution: 'Urban Density Tiles'
-  });
+    attribution: 'Urban Density Tiles',
+    zIndex: 400
+  }); urbanDensityTiles.addTo(map);  // aktifkan tile langsung
+
+
 
   // Style functions
   function styleBuiltup2024() {
