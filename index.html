@@ -7,7 +7,6 @@
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-sA+8VWPdRPSOw7r1yqOrv2iWVfPHa1clTJo6ZhU9tAc="
     crossorigin=""
   />
   <style>
@@ -48,74 +47,30 @@
   <i style="background:#ff7800"></i> Built-up 2024<br>
   <i style="background:#0078ff"></i> Built-up 2025<br>
   <i style="background:green"></i> Ekspansi<br>
-  <hr>
-  <strong>Urban Density (Tile Layer):</strong><br>
-  <i style="background:#91bfdb"></i> Jarang<br>
-  <i style="background:#fee08b"></i> Sedang<br>
-  <i style="background:#fc8d59"></i> Padat<br>
-  <i style="background:#d73027"></i> Sangat Padat<br>
 </div>
 
 <script
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-oPRe6C1IHr0PO6BnsrXGRwvZcdTLMULbE6MjP38U98w="
   crossorigin=""
 ></script>
 <script>
-  // Base Layers
+  // Base Layer
   var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     minZoom: 10,
     maxZoom: 14
   });
 
-  var cartodb = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CartoDB',
-    minZoom: 10,
-    maxZoom: 14
-  });
-
-  var toner = L.tileLayer('https://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', {
-    attribution: 'Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap',
-    minZoom: 10,
-    maxZoom: 14
-  });
-
-  var white = L.tileLayer(
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==",
-    { minZoom: 10, maxZoom: 14 }
-  );
-
-  // Overlay Tile Layer (Urban Density)
-  var urbanDensityTiles = L.tileLayer(
-    'https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png',
-    {
-      opacity: 0.7,
-      minZoom: 10,
-      maxZoom: 14,
-      attribution: 'Urban Density Tiles',
-      errorTileUrl: 'https://via.placeholder.com/256/eeeeee/aaaaaa?text=No+Tile' // fallback tile jika error
-    }
-  );
-
-  // Map initialization
+  // Map initialization tanpa overlay tile urban density
   var map = L.map('map', {
     center: [-1.3648, 101.2803],
     zoom: 12,
     minZoom: 10,
     maxZoom: 14,
-    layers: [osm, urbanDensityTiles]
+    layers: [osm]
   });
 
-  // Base maps object
-  var basemaps = {
-    "OpenStreetMap": osm,
-    "CartoDB Positron": cartodb,
-    "Stamen Toner": toner,
-    "Without Background": white
-  };
-
-  // LayerGroups placeholder for GeoJSON
+  // LayerGroups for GeoJSON
   var builtup2024Layer = L.layerGroup();
   var builtup2025Layer = L.layerGroup();
   var ekspansiLayer = L.layerGroup();
@@ -163,12 +118,11 @@
     }
   }
 
-  // Load Built-up 2024 GeoJSON
+  // Load Built-up 2024 GeoJSON tanpa filter dulu supaya langsung tampil semua
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2024_asli.geojson')
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
-          filter: f => f.properties.tahun === "2024",
           style: styleBuiltup2024,
           onEachFeature: (feature, layer) => {
             var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
@@ -180,12 +134,11 @@
       }
     });
 
-  // Load Built-up 2025 GeoJSON
+  // Load Built-up 2025 GeoJSON tanpa filter
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2025_asli.geojson')
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
-          filter: f => f.properties.tahun === "2025",
           style: styleBuiltup2025,
           onEachFeature: (feature, layer) => {
             var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
@@ -197,7 +150,7 @@
       }
     });
 
-  // Load Ekspansi GeoJSON
+  // Load Ekspansi GeoJSON tanpa filter
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/ekspansi_solok_selatan_2025_asli.geojson')
     .then(data => {
       if (data) {
@@ -214,18 +167,20 @@
       }
     });
 
-  // Overlay maps object
+  // Layer control (base and overlays)
+  var basemaps = {
+    "OpenStreetMap": osm
+  };
+
   var overlaymaps = {
-    "Urban Density": urbanDensityTiles,
     "Built-up 2024": builtup2024Layer,
     "Built-up 2025": builtup2025Layer,
     "Ekspansi": ekspansiLayer
   };
 
-  // Layer control
   L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
-  // Fit map to bounds of urban density tiles area
+  // Fit map bounds (bisa disesuaikan kalau perlu)
   map.fitBounds([
     [-1.7251908911809466, 100.8879929288952],
     [-1.004406319174037, 101.67259597536716]
