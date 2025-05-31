@@ -49,34 +49,31 @@
   <i style="background:green"></i> Ekspansi<br>
 </div>
 
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  crossorigin=""
-></script>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<!-- Turf.js untuk menghitung luas -->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
 <script>
   // Base Layer
   var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    minZoom: 10,
-    maxZoom: 14
+    attribution: '&copy; OpenStreetMap contributors'
   });
 
-  // Map initialization tanpa overlay tile urban density
+  // Map initialization tanpa batasan zoom
   var map = L.map('map', {
     center: [-1.3648, 101.2803],
     zoom: 12,
-    minZoom: 10,
-    maxZoom: 14,
     layers: [osm]
   });
 
-  // LayerGroups for GeoJSON
+  // LayerGroups
   var builtup2024Layer = L.layerGroup();
   var builtup2025Layer = L.layerGroup();
   var ekspansiLayer = L.layerGroup();
 
   // Style functions
-  function styleBuiltup2024(feature) {
+  function styleBuiltup2024() {
     return {
       fillColor: '#ff7800',
       weight: 1,
@@ -85,7 +82,7 @@
     };
   }
 
-  function styleBuiltup2025(feature) {
+  function styleBuiltup2025() {
     return {
       fillColor: '#0078ff',
       weight: 1,
@@ -94,7 +91,7 @@
     };
   }
 
-  function styleEkspansi(feature) {
+  function styleEkspansi() {
     return {
       fillColor: 'green',
       weight: 1,
@@ -103,7 +100,7 @@
     };
   }
 
-  // Utility fetch with error logging
+  // Fetch GeoJSON
   async function fetchGeoJSON(url) {
     try {
       const response = await fetch(url);
@@ -118,14 +115,24 @@
     }
   }
 
-  // Load Built-up 2024 GeoJSON tanpa filter dulu supaya langsung tampil semua
+  function getArea(feature) {
+    // Jika sudah ada property area_ha, pakai
+    if (feature.properties.area_ha) return feature.properties.area_ha;
+
+    // Jika belum ada, hitung luas menggunakan Turf
+    const areaInMeters = turf.area(feature);
+    const areaInHa = areaInMeters / 10000;
+    return areaInHa;
+  }
+
+  // Load Built-up 2024
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2024_asli.geojson')
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
           style: styleBuiltup2024,
           onEachFeature: (feature, layer) => {
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+            var luas = getArea(feature).toFixed(2);
             layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
           }
         });
@@ -134,14 +141,14 @@
       }
     });
 
-  // Load Built-up 2025 GeoJSON tanpa filter
+  // Load Built-up 2025
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2025_asli.geojson')
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
           style: styleBuiltup2025,
           onEachFeature: (feature, layer) => {
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+            var luas = getArea(feature).toFixed(2);
             layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
           }
         });
@@ -150,7 +157,7 @@
       }
     });
 
-  // Load Ekspansi GeoJSON tanpa filter
+  // Load Ekspansi
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/ekspansi_solok_selatan_2025_asli.geojson')
     .then(data => {
       if (data) {
@@ -158,7 +165,7 @@
           style: styleEkspansi,
           onEachFeature: (feature, layer) => {
             var info = feature.properties.info || 'N/A';
-            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+            var luas = getArea(feature).toFixed(2);
             layer.bindPopup(`<b>Ekspansi</b><br>Info: ${info}<br>Luas: ${luas} ha`);
           }
         });
@@ -167,20 +174,16 @@
       }
     });
 
-  // Layer control (base and overlays)
-  var basemaps = {
-    "OpenStreetMap": osm
-  };
-
+  // Layer control
+  var basemaps = { "OpenStreetMap": osm };
   var overlaymaps = {
     "Built-up 2024": builtup2024Layer,
     "Built-up 2025": builtup2025Layer,
     "Ekspansi": ekspansiLayer
   };
-
   L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
-  // Fit map bounds (bisa disesuaikan kalau perlu)
+  // Auto-fit bounds (sesuaikan area peta)
   map.fitBounds([
     [-1.7251908911809466, 100.8879929288952],
     [-1.004406319174037, 101.67259597536716]
@@ -189,3 +192,4 @@
 
 </body>
 </html>
+
