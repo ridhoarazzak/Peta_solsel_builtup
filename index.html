@@ -49,10 +49,11 @@
 
     // Jika kamu punya tile urban_density sendiri, ubah ini ke URL GitHub Pages-mu
     
-    var urbanDensity = L.tileLayer('https://ridhoarazzak.github.io/Peta_solsel_builtup/{z}/{x}/{y}.png', {
-      opacity: 0.6,
-      attribution: 'Urban Density'
-    }).addTo(map);
+    var urbanDensity = L.tileLayer('https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png', {
+  opacity: 0.6,
+  attribution: 'Urban Density'
+}).addTo(map);
+
     
 
     // Style untuk Built-up Area
