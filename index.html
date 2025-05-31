@@ -86,14 +86,15 @@
     { minZoom: 10, maxZoom: 14 }
   );
 
-  // Overlay Tile Layer (Urban Density) - HAPUS tms:true karena bukan TMS
+  // Overlay Tile Layer (Urban Density)
   var urbanDensityTiles = L.tileLayer(
     'https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png',
     {
       opacity: 0.7,
       minZoom: 10,
       maxZoom: 14,
-      attribution: 'Urban Density Tiles'
+      attribution: 'Urban Density Tiles',
+      errorTileUrl: 'https://via.placeholder.com/256/eeeeee/aaaaaa?text=No+Tile' // fallback tile jika error
     }
   );
 
@@ -147,56 +148,71 @@
     };
   }
 
-  // Load Built-up 2024 GeoJSON dari GitHub raw
-  fetch('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2024_asli.geojson')
-    .then(res => res.json())
-    .then(data => {
-      var layer = L.geoJSON(data, {
-        filter: f => f.properties.tahun === "2024",
-        style: styleBuiltup2024,
-        onEachFeature: (feature, layer) => {
-          var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-          layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
-        }
-      });
-      builtup2024Layer.addLayer(layer);
-      builtup2024Layer.addTo(map);
-    })
-    .catch(err => console.error("Gagal load builtup 2024:", err));
+  // Utility fetch with error logging
+  async function fetchGeoJSON(url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      console.log(`Berhasil load: ${url}`);
+      return data;
+    } catch (error) {
+      console.error(`Gagal load ${url}:`, error);
+      alert(`Gagal memuat data dari: ${url}\nPeriksa koneksi atau sumber data.`);
+      return null;
+    }
+  }
 
-  // Load Built-up 2025 GeoJSON dari GitHub raw
-  fetch('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2025_asli.geojson')
-    .then(res => res.json())
+  // Load Built-up 2024 GeoJSON
+  fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2024_asli.geojson')
     .then(data => {
-      var layer = L.geoJSON(data, {
-        filter: f => f.properties.tahun === "2025",
-        style: styleBuiltup2025,
-        onEachFeature: (feature, layer) => {
-          var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-          layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
-        }
-      });
-      builtup2025Layer.addLayer(layer);
-      builtup2025Layer.addTo(map);
-    })
-    .catch(err => console.error("Gagal load builtup 2025:", err));
+      if (data) {
+        var layer = L.geoJSON(data, {
+          filter: f => f.properties.tahun === "2024",
+          style: styleBuiltup2024,
+          onEachFeature: (feature, layer) => {
+            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+            layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
+          }
+        });
+        builtup2024Layer.addLayer(layer);
+        builtup2024Layer.addTo(map);
+      }
+    });
 
-  // Load Ekspansi GeoJSON dari GitHub raw
-  fetch('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/ekspansi_solok_selatan_2025_asli.geojson')
-    .then(res => res.json())
+  // Load Built-up 2025 GeoJSON
+  fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2025_asli.geojson')
     .then(data => {
-      var layer = L.geoJSON(data, {
-        style: styleEkspansi,
-        onEachFeature: (feature, layer) => {
-          var info = feature.properties.info || 'N/A';
-          var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
-          layer.bindPopup(`<b>Ekspansi</b><br>Info: ${info}<br>Luas: ${luas} ha`);
-        }
-      });
-      ekspansiLayer.addLayer(layer);
-      ekspansiLayer.addTo(map);
-    })
-    .catch(err => console.error("Gagal load ekspansi:", err));
+      if (data) {
+        var layer = L.geoJSON(data, {
+          filter: f => f.properties.tahun === "2025",
+          style: styleBuiltup2025,
+          onEachFeature: (feature, layer) => {
+            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+            layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
+          }
+        });
+        builtup2025Layer.addLayer(layer);
+        builtup2025Layer.addTo(map);
+      }
+    });
+
+  // Load Ekspansi GeoJSON
+  fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/ekspansi_solok_selatan_2025_asli.geojson')
+    .then(data => {
+      if (data) {
+        var layer = L.geoJSON(data, {
+          style: styleEkspansi,
+          onEachFeature: (feature, layer) => {
+            var info = feature.properties.info || 'N/A';
+            var luas = feature.properties.area_ha ? feature.properties.area_ha.toFixed(2) : 'N/A';
+            layer.bindPopup(`<b>Ekspansi</b><br>Info: ${info}<br>Luas: ${luas} ha`);
+          }
+        });
+        ekspansiLayer.addLayer(layer);
+        ekspansiLayer.addTo(map);
+      }
+    });
 
   // Overlay maps object
   var overlaymaps = {
