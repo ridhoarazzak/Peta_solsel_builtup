@@ -94,25 +94,13 @@ function styleUrbanDensity(feature) {
 }
 var urbanDensityLayer = L.layerGroup();
 
-fetchGeoJSON('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/urban_density_solok_selatan.geojson')
+fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.geojson')
+  .then(response => response.json())
   .then(data => {
-    if (data) {
-      var layer = L.geoJSON(data, {
-        style: styleUrbanDensity,
-        onEachFeature: function(feature, layer) {
-          var d = feature.properties.density || 'N/A';
-          layer.bindPopup(`<b>Urban Density</b><br>Densitas: ${d}`);
-        }
-      });
-      urbanDensityLayer.addLayer(layer);
-      urbanDensityLayer.addTo(map);
-    }
+    L.geoJSON(data).addTo(map);
   });
 
-
-
-
-
+  
   // Style functions
   function styleBuiltup2024() {
     return {
