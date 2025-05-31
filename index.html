@@ -94,7 +94,7 @@ function styleUrbanDensity(feature) {
 }
 var urbanDensityLayer = L.layerGroup();
 
-fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/urban_density_solok_selatan.geojson')
+fetchGeoJSON('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/urban_density_solok_selatan.geojson')
   .then(data => {
     if (data) {
       var layer = L.geoJSON(data, {
