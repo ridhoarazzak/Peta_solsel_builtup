@@ -72,6 +72,14 @@
   var builtup2025Layer = L.layerGroup();
   var ekspansiLayer = L.layerGroup();
 
+  // Tile Layer Urban Density (zoom 10-14)
+  var urbanDensityTiles = L.tileLayer('https://ridhoarazzak.github.io/Peta_solsel_builtup/tiles/urban_density_tiles/{z}/{x}/{y}.png', {
+    minZoom: 10,
+    maxZoom: 14,
+    opacity: 0.6,
+    attribution: 'Urban Density Tiles'
+  });
+
   // Style functions
   function styleBuiltup2024() {
     return {
@@ -116,13 +124,9 @@
   }
 
   function getArea(feature) {
-    // Jika sudah ada property area_ha, pakai
     if (feature.properties.area_ha) return feature.properties.area_ha;
-
-    // Jika belum ada, hitung luas menggunakan Turf
     const areaInMeters = turf.area(feature);
-    const areaInHa = areaInMeters / 10000;
-    return areaInHa;
+    return areaInMeters / 10000;
   }
 
   // Load Built-up 2024
@@ -179,7 +183,8 @@
   var overlaymaps = {
     "Built-up 2024": builtup2024Layer,
     "Built-up 2025": builtup2025Layer,
-    "Ekspansi": ekspansiLayer
+    "Ekspansi": ekspansiLayer,
+    "Urban Density Tiles": urbanDensityTiles
   };
   L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
