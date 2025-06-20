@@ -4,11 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard Built-up & Urban Density</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <style>
     html, body, #map {
       height: 100%;
@@ -59,61 +55,25 @@
   <i style="background:#ff7800"></i> Built-up 2024<br>
   <i style="background:#0078ff"></i> Built-up 2025<br>
   <i style="background:green"></i> Ekspansi<br>
-  <i style="background:#E31A1C"></i> Urban Density Tinggi<br>
+  <i style="background:#E31A1C"></i> Urban Density PNG<br>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
 <script>
-  var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  });
-
   var map = L.map('map', {
     center: [-1.3648, 101.2803],
-    zoom: 12,
-    layers: [osm]
+    zoom: 12
   });
+
+  var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
   var builtup2024Layer = L.layerGroup();
   var builtup2025Layer = L.layerGroup();
   var ekspansiLayer = L.layerGroup();
-  var urbanDensityLayer = L.layerGroup();
-
-  function getDensityColor(density) {
-    return density > 1000 ? '#800026' :
-           density > 750  ? '#BD0026' :
-           density > 500  ? '#E31A1C' :
-           density > 250  ? '#FC4E2A' :
-           density > 100  ? '#FD8D3C' :
-           density > 50   ? '#FEB24C' :
-           density > 10   ? '#FED976' :
-                            '#FFEDA0';
-  }
-
-  function styleUrbanDensity(feature) {
-    return {
-      fillColor: getDensityColor(feature.properties.density),
-      weight: 1,
-      opacity: 1,
-      color: 'white',
-      fillOpacity: 0.6
-    };
-  }
-
-  function fetchGeoJSON(url) {
-    return fetch(url)
-      .then(response => {
-        if (!response.ok) throw new Error('Gagal load');
-        return response.json();
-      })
-      .catch(error => {
-        alert("Gagal memuat data dari: " + url);
-        console.error(error);
-        return null;
-      });
-  }
 
   function getArea(feature) {
     if (feature.properties.area_ha) return feature.properties.area_ha;
@@ -121,22 +81,17 @@
     return area / 10000;
   }
 
-  // Load Urban Density
-  fetchGeoJSON('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.geojson')
-    .then(data => {
-      if (data) {
-        var layer = L.geoJSON(data, {
-          style: styleUrbanDensity,
-          onEachFeature: (feature, layer) => {
-            var dens = feature.properties.density || 0;
-            layer.bindPopup(`<b>Urban Density</b><br>${dens} orang/km²`);
-          }
-        });
-        urbanDensityLayer.addLayer(layer);
-      }
-    });
+  async function fetchGeoJSON(url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Gagal load");
+      return await response.json();
+    } catch (e) {
+      alert("Gagal load data dari: " + url);
+      return null;
+    }
+  }
 
-  // Load Built-up 2024
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2024_asli.geojson')
     .then(data => {
       if (data) {
@@ -144,15 +99,13 @@
           style: { fillColor: '#ff7800', weight: 1, color: 'white', fillOpacity: 0.6 },
           onEachFeature: (feature, layer) => {
             var luas = getArea(feature).toFixed(2);
-            layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
+            layer.bindPopup(`<b>Built-up 2024</b><br>Luas: ${luas} ha`);
           }
         });
-        builtup2024Layer.addLayer(layer);
-        builtup2024Layer.addTo(map);
+        builtup2024Layer.addLayer(layer).addTo(map);
       }
     });
 
-  // Load Built-up 2025
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2025_asli.geojson')
     .then(data => {
       if (data) {
@@ -160,15 +113,13 @@
           style: { fillColor: '#0078ff', weight: 1, color: 'white', fillOpacity: 0.6 },
           onEachFeature: (feature, layer) => {
             var luas = getArea(feature).toFixed(2);
-            layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
+            layer.bindPopup(`<b>Built-up 2025</b><br>Luas: ${luas} ha`);
           }
         });
-        builtup2025Layer.addLayer(layer);
-        builtup2025Layer.addTo(map);
+        builtup2025Layer.addLayer(layer).addTo(map);
       }
     });
 
-  // Load Ekspansi
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/ekspansi_solok_selatan_2025_asli.geojson')
     .then(data => {
       if (data) {
@@ -180,21 +131,29 @@
             layer.bindPopup(`<b>Ekspansi</b><br>Info: ${info}<br>Luas: ${luas} ha`);
           }
         });
-        ekspansiLayer.addLayer(layer);
-        ekspansiLayer.addTo(map);
+        ekspansiLayer.addLayer(layer).addTo(map);
       }
     });
 
-  // Controls
+  // Tambahkan tile PNG Urban Density dari jsDelivr
+  var tileDensityLayer = L.tileLayer(
+    'https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/tiles/urban_density_tiles/{z}/{x}/{y}.png', {
+      attribution: 'Urban Density Tile',
+      maxZoom: 19,
+      opacity: 0.7
+    }
+  );
+
   var basemaps = { "OpenStreetMap": osm };
   var overlaymaps = {
     "Built-up 2024": builtup2024Layer,
     "Built-up 2025": builtup2025Layer,
     "Ekspansi": ekspansiLayer,
-    "Urban Density": urbanDensityLayer
+    "Urban Density (PNG)": tileDensityLayer
   };
-  L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
-  L.control.scale({position: 'bottomright'}).addTo(map);
+
+  L.control.layers(basemaps, overlaymaps, { collapsed: false }).addTo(map);
+  L.control.scale({ position: 'bottomright' }).addTo(map);
 
   map.fitBounds([
     [-1.7251908911809466, 100.8879929288952],
