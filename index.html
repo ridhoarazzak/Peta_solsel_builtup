@@ -36,6 +36,18 @@
       opacity: 0.8;
       border: 1px solid #999;
     }
+    @media (max-width: 600px) {
+      #legend {
+        font-size: 12px;
+        max-width: 140px;
+        padding: 6px;
+      }
+      #legend i {
+        width: 14px;
+        height: 14px;
+        margin-right: 6px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -47,115 +59,89 @@
   <i style="background:#ff7800"></i> Built-up 2024<br>
   <i style="background:#0078ff"></i> Built-up 2025<br>
   <i style="background:green"></i> Ekspansi<br>
+  <i style="background:#E31A1C"></i> Urban Density Tinggi<br>
 </div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<!-- Turf.js untuk menghitung luas -->
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
 <script>
-  // Base Layer
   var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   });
 
-  // Map initialization tanpa batasan zoom
   var map = L.map('map', {
     center: [-1.3648, 101.2803],
     zoom: 12,
     layers: [osm]
   });
 
-  // LayerGroups
   var builtup2024Layer = L.layerGroup();
   var builtup2025Layer = L.layerGroup();
   var ekspansiLayer = L.layerGroup();
+  var urbanDensityLayer = L.layerGroup();
 
   function getDensityColor(density) {
-  return density > 1000 ? '#800026' :
-         density > 750  ? '#BD0026' :
-         density > 500  ? '#E31A1C' :
-         density > 250  ? '#FC4E2A' :
-         density > 100  ? '#FD8D3C' :
-         density > 50   ? '#FEB24C' :
-         density > 10   ? '#FED976' :
-                          '#FFEDA0';
-}
+    return density > 1000 ? '#800026' :
+           density > 750  ? '#BD0026' :
+           density > 500  ? '#E31A1C' :
+           density > 250  ? '#FC4E2A' :
+           density > 100  ? '#FD8D3C' :
+           density > 50   ? '#FEB24C' :
+           density > 10   ? '#FED976' :
+                            '#FFEDA0';
+  }
 
-function styleUrbanDensity(feature) {
-  return {
-    fillColor: getDensityColor(feature.properties.density),
-    weight: 1,
-    opacity: 1,
-    color: 'white',
-    fillOpacity: 0.6
-  };
-}
-var urbanDensityLayer = L.layerGroup();
-
-fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.geojson')
-  .then(response => response.json())
-  .then(data => {
-    L.geoJSON(data).addTo(map);
-  });
-
-  
-  // Style functions
-  function styleBuiltup2024() {
+  function styleUrbanDensity(feature) {
     return {
-      fillColor: '#ff7800',
+      fillColor: getDensityColor(feature.properties.density),
       weight: 1,
+      opacity: 1,
       color: 'white',
       fillOpacity: 0.6
     };
   }
 
-  function styleBuiltup2025() {
-    return {
-      fillColor: '#0078ff',
-      weight: 1,
-      color: 'white',
-      fillOpacity: 0.6
-    };
-  }
-
-  function styleEkspansi() {
-    return {
-      fillColor: 'green',
-      weight: 1,
-      color: 'white',
-      fillOpacity: 0.4
-    };
-  }
-
-  // Fetch GeoJSON
-  async function fetchGeoJSON(url) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
-      console.log(`Berhasil load: ${url}`);
-      return data;
-    } catch (error) {
-      console.error(`Gagal load ${url}:`, error);
-      alert(`Gagal memuat data dari: ${url}\nPeriksa koneksi atau sumber data.`);
-      return null;
-    }
+  function fetchGeoJSON(url) {
+    return fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error('Gagal load');
+        return response.json();
+      })
+      .catch(error => {
+        alert("Gagal memuat data dari: " + url);
+        console.error(error);
+        return null;
+      });
   }
 
   function getArea(feature) {
     if (feature.properties.area_ha) return feature.properties.area_ha;
-    const areaInMeters = turf.area(feature);
-    return areaInMeters / 10000;
+    const area = turf.area(feature);
+    return area / 10000;
   }
+
+  // Load Urban Density
+  fetchGeoJSON('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.geojson')
+    .then(data => {
+      if (data) {
+        var layer = L.geoJSON(data, {
+          style: styleUrbanDensity,
+          onEachFeature: (feature, layer) => {
+            var dens = feature.properties.density || 0;
+            layer.bindPopup(`<b>Urban Density</b><br>${dens} orang/km²`);
+          }
+        });
+        urbanDensityLayer.addLayer(layer);
+      }
+    });
 
   // Load Built-up 2024
   fetchGeoJSON('https://raw.githubusercontent.com/ridhoarazzak/Peta_solsel_builtup/main/builtup_solok_selatan_2024_asli.geojson')
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
-          style: styleBuiltup2024,
+          style: { fillColor: '#ff7800', weight: 1, color: 'white', fillOpacity: 0.6 },
           onEachFeature: (feature, layer) => {
             var luas = getArea(feature).toFixed(2);
             layer.bindPopup(`<b>Built-up Area 2024</b><br>Luas: ${luas} ha`);
@@ -171,7 +157,7 @@ fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
-          style: styleBuiltup2025,
+          style: { fillColor: '#0078ff', weight: 1, color: 'white', fillOpacity: 0.6 },
           onEachFeature: (feature, layer) => {
             var luas = getArea(feature).toFixed(2);
             layer.bindPopup(`<b>Built-up Area 2025</b><br>Luas: ${luas} ha`);
@@ -187,7 +173,7 @@ fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.
     .then(data => {
       if (data) {
         var layer = L.geoJSON(data, {
-          style: styleEkspansi,
+          style: { fillColor: 'green', weight: 1, color: 'white', fillOpacity: 0.4 },
           onEachFeature: (feature, layer) => {
             var info = feature.properties.info || 'N/A';
             var luas = getArea(feature).toFixed(2);
@@ -199,7 +185,7 @@ fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.
       }
     });
 
-  // Layer control
+  // Controls
   var basemaps = { "OpenStreetMap": osm };
   var overlaymaps = {
     "Built-up 2024": builtup2024Layer,
@@ -208,8 +194,8 @@ fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.
     "Urban Density": urbanDensityLayer
   };
   L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
+  L.control.scale({position: 'bottomright'}).addTo(map);
 
-  // Auto-fit bounds (sesuaikan area peta)
   map.fitBounds([
     [-1.7251908911809466, 100.8879929288952],
     [-1.004406319174037, 101.67259597536716]
@@ -218,4 +204,3 @@ fetch('https://cdn.jsdelivr.net/gh/ridhoarazzak/Peta_solsel_builtup@main/output.
 
 </body>
 </html>
-
